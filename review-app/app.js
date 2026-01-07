@@ -71,6 +71,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+// serve uploaded files from the configured uploads directory
+app.use('/uploads', express.static(uploadsDir));
 
 // Basic CORS to allow React frontend on Vercel to call this API
 app.use(function(req, res, next) {

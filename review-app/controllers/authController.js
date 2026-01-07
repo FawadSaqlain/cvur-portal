@@ -356,18 +356,18 @@ exports.completeProfile = async (req, res) => {
           return res.status(400).json({ success: false, error: { code: 'ERR_FILE_TOO_LARGE', message: 'File too large (max 1MB)' } });
         }
 
-        const uploadsDir = path.join(__dirname, '..', 'public', 'uploads');
-        if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+        // use same uploads dir as configured in app.js (writable on Vercel)
+        const uploadsDir = process.env.UPLOADS_DIR || path.join('/tmp', 'uploads');
 
-        // remove previous file if present
-        if (user.idCardImage) {
-          try {
-            const prev = path.join(__dirname, '..', 'public', user.idCardImage.replace(/^\//, ''));
-            if (fs.existsSync(prev)) fs.unlinkSync(prev);
-          } catch (e) {
-            console.warn('failed to remove previous idCard image', e && e.message ? e.message : e);
-          }
-        }
+// remove previous file if present
+if (user.idCardImage) {
+try {
+const prev = path.join(uploadsDir, path.basename(user.idCardImage));
+if (fs.existsSync(prev)) fs.unlinkSync(prev);
+} catch (e) {
+console.warn('failed to remove previous idCard image', e && e.message ? e.message : e);
+}
+}
 
         // preserve extension if available
         const originalExt = path.extname(file.name) || '';
