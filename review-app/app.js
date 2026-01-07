@@ -56,15 +56,15 @@ app.use(expressLayouts);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-// ensure uploads dir exists
-const uploadsDir = path.join(__dirname, 'public', 'uploads');
+// ensure uploads dir exists (use writable dir for serverless environments)
+const uploadsDir = process.env.UPLOADS_DIR || path.join('/tmp', 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-// ensure tmp dir for express-fileupload temp files exists
-const tmpDir = path.join(__dirname, 'tmp');
+// ensure tmp dir for express-fileupload temp files exists (also under writable dir)
+const tmpDir = process.env.TMP_DIR || path.join('/tmp', 'tmp');
 if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
 
 // file upload middleware: increase limit to 10MB and use temp files for stability
-app.use(fileUpload({ limits: { fileSize: 10 * 1024 * 1024 }, useTempFiles: true, tempFileDir: path.join(__dirname, 'tmp') }));
+app.use(fileUpload({ limits: { fileSize: 10 * 1024 * 1024 }, useTempFiles: true, tempFileDir: tmpDir }));
 
 app.use(logger('dev'));
 app.use(express.json());
