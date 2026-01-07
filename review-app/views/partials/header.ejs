@@ -1,0 +1,129 @@
+<header class="site-header">
+  <div class="brand">
+    <a href="/" class="brand-link">
+      <span class="brand-logo">
+        <i class="fa-regular fa-eye"></i>
+      </span>
+      <div>
+        <span class="brand-title">CVUR Portal</span>
+        <span class="brand-tagline">See clearly, choose wisely</span>
+      </div>
+    </a>
+  </div>
+  <nav class="site-nav">
+  <a id="homeLink" href="/">Home</a>
+  <a id="signupLink" href="/signup">Sign Up</a>
+  <a id="loginLink" href="/login">Login</a>
+  <!-- Admin link is conditional: defaults to login page; client script will switch to add page when authenticated -->
+  <a id="adminLink" href="/admin/login">Admin</a>
+  <a id="adminAddClassLink" href="/admin/class/add" style="display:none; margin-left:10px;">Add Class</a>
+  <a id="adminUsersLink" href="/admin/users" style="display:none; margin-left:10px;">Manage Users</a>
+  <a id="adminOfferingsLink" href="/admin/offerings" style="display:none; margin-left:10px;">Manage Offerings</a>
+  <a id="adminTermsLink" href="/admin/terms" style="display:none; margin-left:10px;">Terms</a>
+  <a id="userLink" href="/profile" style="display:none; margin-left:10px;">My Profile</a>
+  <a id="giveReviewLink" href="/ratings/give" style="display:none; margin-left:10px;">Give Review</a>
+  <a id="viewRatingsLink" href="/ratings" style="display:none; margin-left:10px;">View Ratings</a>
+  <a id="myReviewsLink" href="/dashboard/ratings" style="display:none; margin-left:10px;">My Reviews</a>
+  <span id="userDisplay" style="display:none; margin-left:10px; font-weight:600;"></span>
+  <a id="commonLogout" href="#" style="display:none; margin-left:10px;" title="Logout">Logout</a>
+  <a id="adminLogout" href="#" style="display:none; margin-left:10px;" title="Admin Logout">Admin Logout</a>
+  </nav>
+
+  <!-- Profile completion banner (hidden by default) -->
+  <div id="profileCompleteBanner" style="display:none; background:#fff3cd; color:#856404; padding:8px 12px; border:1px solid #ffeeba; margin-top:8px;">
+    Your profile is incomplete. <a href="/complete-profile" id="completeProfileLink">Click here to complete your profile</a>.
+  </div>
+
+  <script>
+    (function(){
+      try {
+        // gather elements
+        const el = id => document.getElementById(id);
+        const homeLink = el('homeLink');
+        const signupLink = el('signupLink');
+        const loginLink = el('loginLink');
+        const adminLink = el('adminLink');
+        const adminAddClassLink = el('adminAddClassLink');
+        const adminUsersLink = el('adminUsersLink');
+        const adminOfferingsLink = el('adminOfferingsLink');
+        const adminTermsLink = el('adminTermsLink');
+        const adminLogout = el('adminLogout');
+        const userLink = el('userLink');
+        const giveReviewLink = el('giveReviewLink');
+        const viewRatingsLink = el('viewRatingsLink');
+        const myReviewsLink = el('myReviewsLink');
+        const userDisplay = el('userDisplay');
+        const commonLogout = el('commonLogout');
+        const profileBanner = el('profileCompleteBanner');
+
+        const adminToken = localStorage.getItem('adminToken');
+        const userToken = localStorage.getItem('token');
+        let userObj = null;
+        try { userObj = JSON.parse(localStorage.getItem('user') || 'null'); } catch(e){ userObj = null; }
+
+        // Determine role: admin > student > anon
+        const role = adminToken ? 'admin' : (userToken ? 'student' : 'anon');
+
+        // first hide everything to create a predictable baseline
+        [homeLink, signupLink, loginLink, adminLink, adminAddClassLink, adminUsersLink, adminOfferingsLink, adminTermsLink, adminLogout, userLink, giveReviewLink, viewRatingsLink, myReviewsLink, userDisplay, commonLogout, profileBanner].forEach(x=>{ try{ if(x) x.style.display='none'; }catch(e){} });
+
+        if (role === 'admin') {
+          // Admin view
+          if (adminLink) { adminLink.href = '/admin/ratings'; adminLink.textContent = 'Admin • Dashboard'; adminLink.style.display='inline-block'; }
+          if (adminAddClassLink) adminAddClassLink.style.display='inline-block';
+          if (adminUsersLink) adminUsersLink.style.display='inline-block';
+          if (adminOfferingsLink) adminOfferingsLink.style.display='inline-block';
+          if (adminTermsLink) adminTermsLink.style.display='inline-block';
+          if (viewRatingsLink) viewRatingsLink.style.display='inline-block';
+          if (adminLogout) adminLogout.style.display='inline-block';
+        } else if (role === 'student') {
+          // Student view
+          if (userLink) userLink.style.display='inline-block';
+          if (giveReviewLink) giveReviewLink.style.display='inline-block';
+          if (viewRatingsLink) viewRatingsLink.style.display='inline-block';
+          if (myReviewsLink) myReviewsLink.style.display='inline-block';
+          if (commonLogout) commonLogout.style.display='inline-block';
+          if (userDisplay) {
+            if (userObj && (userObj.name || userObj.email)) {
+              userDisplay.style.display = 'inline-block';
+              userDisplay.textContent = (userObj.name && userObj.name.first ? userObj.name.first : (userObj.email || 'User'));
+            } else {
+              // try fetching current user if missing
+              (async function(){
+                try {
+                  const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
+                  const j = await res.json().catch(()=>null);
+                  if (j && j.success && j.data && j.data.user) {
+                    const u = j.data.user;
+                    try { localStorage.setItem('user', JSON.stringify(u)); } catch(e){}
+                    if (userDisplay) { userDisplay.style.display='inline-block'; userDisplay.textContent = (u.name && u.name.first ? u.name.first : (u.email || 'User')); }
+                    // show profile banner check for students
+                    try { if (profileBanner) {
+                      const needs = !u.phone || (!u.idCard && !u.idCardFilename && !u.idCardUrl && !u.idCardImage) || (u.semesterNumber && Number(u.semesterNumber) > 1 && (typeof u.cgpa === 'undefined' || u.cgpa === null || String(u.cgpa).trim() === ''));
+                      if (needs) profileBanner.style.display='block';
+                    }} catch(e){}
+                  }
+                } catch(e) { /* ignore */ }
+              })();
+            }
+          }
+        } else {
+          // Anonymous (not logged in) view — show Home/Sign Up/Login/Admin
+          if (homeLink) homeLink.style.display='inline-block';
+          if (signupLink) signupLink.style.display='inline-block';
+          if (loginLink) loginLink.style.display='inline-block';
+          if (adminLink) { adminLink.href = '/admin/login'; adminLink.textContent = 'Admin'; adminLink.style.display='inline-block'; }
+        }
+
+        // Logout handlers (shared)
+        if (commonLogout) commonLogout.addEventListener('click', async function(e){
+          e.preventDefault();
+          if (window.appAuth && typeof window.appAuth.logout === 'function') { window.appAuth.logout(); return; }
+          try { const token = localStorage.getItem('token') || localStorage.getItem('adminToken'); if (token) await fetch('/api/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }); } catch(e){}
+          localStorage.removeItem('token'); localStorage.removeItem('adminToken'); localStorage.removeItem('user'); window.location = '/login';
+        });
+        if (adminLogout) adminLogout.addEventListener('click', function(e){ e.preventDefault(); if (window.appAuth && typeof window.appAuth.logout === 'function') { window.appAuth.logout(); } else { if (commonLogout) commonLogout.click(); } });
+      } catch(e) { /* ignore */ }
+    })();
+  </script>
+</header>

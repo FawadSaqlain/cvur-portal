@@ -1,0 +1,50 @@
+<div class="card">
+<h1><i class="fa-solid fa-users-gear" style="margin-right:8px;color:var(--primary);"></i>Manage Users</h1>
+<p class="muted" style="margin-top:4px;">Search, edit, or delete users registered in CVUR.</p>
+<p><a href="/admin/users/new">Create new user</a></p>
+<form method="GET" action="/admin/users" class="filters" style="margin-top:8px;">
+  <label>Search<br/><input name="q" placeholder="Search by email or name" value="<%= q %>" /></label>
+  <button type="submit">Search</button>
+</form>
+<table class="table" style="margin-top:12px;">
+  <thead><tr><th>Email</th><th>Name</th><th>Role</th><th>Active</th><th>Actions</th></tr></thead>
+  <tbody>
+    <% users.forEach(function(u){ %>
+      <tr>
+        <td><%= u.email %></td>
+        <td><%= (u.name && (u.name.first || u.name.last)) ? ( (u.name.first||'') + ' ' + (u.name.last||'') ) : '' %></td>
+        <td><%= u.role %></td>
+        <td><%= u.isActive ? 'Yes' : 'No' %></td>
+        <td>
+          <a href="/admin/users/<%= u._id %>/edit">Edit</a>
+          <!-- Delete using JS fetch(DELETE) to follow REST practice -->
+          <button type="button" class="delete-user" data-id="<%= u._id %>">Delete</button>
+        </td>
+      </tr>
+    <% }) %>
+  </tbody>
+ </table>
+</div>
+<script>
+  (function(){
+    document.querySelectorAll('.delete-user').forEach(function(btn){
+      btn.addEventListener('click', async function(){
+        if (!confirm('Delete user?')) return;
+        const id = btn.dataset.id;
+        try {
+          const res = await fetch('/admin/users/' + encodeURIComponent(id), { method: 'DELETE', credentials: 'same-origin', headers: { 'Accept': 'application/json' } });
+          if (res.ok) {
+            // if HTML page, reload to reflect change
+            window.location.reload();
+            return;
+          }
+          let j = null; try { j = await res.json(); } catch(e){}
+          alert((j && j.error && (j.error.message || j.error)) || 'Delete failed');
+        } catch (err) {
+          console.error('delete user error', err);
+          alert('Delete failed');
+        }
+      });
+    });
+  })();
+</script>

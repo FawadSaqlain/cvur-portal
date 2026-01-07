@@ -1,0 +1,51 @@
+<div class="card">
+<h1>Give Reviews</h1>
+<div class="form-row">
+  <% if (activeTerm) { %>
+    <label>Term: <strong><%= activeTerm.name %> (active)</strong></label>
+  <% } else { %>
+    <label>Term: <strong>Not available</strong></label>
+  <% } %>
+</div>
+
+<% /* Show a 'Complete profile' prompt when the logged-in user is missing required profile fields */ %>
+<%
+  const showCompleteButton = (() => {
+    if (!user) return false;
+    // if profileComplete explicitly set to true, don't show
+    if (user.profileComplete) return false;
+    // required fields: phone, idCardImage; cgpa required when semesterNumber > 1
+    const missingPhone = !user.phone;
+    const missingIdCard = !user.idCardImage;
+    const needsCgpa = user.semesterNumber && user.semesterNumber > 1;
+    const missingCgpa = needsCgpa && (typeof user.cgpa === 'undefined' || user.cgpa === null || user.cgpa === '');
+    return missingPhone || missingIdCard || missingCgpa;
+  })();
+%>
+
+<% if (showCompleteButton) { %>
+  <div style="margin:12px 0; padding:10px; border-radius:10px; border:1px solid #e0b4b4; background:#fff6f6;">
+    <strong>Your profile is incomplete.</strong>
+    <p style="margin:8px 0 0 0">Please complete your profile (phone, university ID image, and CGPA if applicable) before giving reviews.</p>
+    <p style="margin:8px 0 0 0"><a href="/complete-profile" class="primary">Complete profile</a></p>
+  </div>
+<% } %>
+
+<ul style="list-style:none;padding-left:0;margin-top:12px">
+  <% 
+    const activeTermId = activeTerm ? String(activeTerm._id) : null;
+    offerings.forEach(function(o){ 
+      // resolve offering.term whether populated (object) or just an id
+      let offeringTermId = null;
+      if (o && o.term) offeringTermId = String(o.term._id ? o.term._id : o.term);
+      if (!activeTermId || !offeringTermId || offeringTermId !== activeTermId) return;
+  %>
+    <li style="padding:10px 12px;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:8px;">
+      <strong><%= o.course && o.course.title ? o.course.title : 'Course' %></strong>
+      by <%= o.teacher && o.teacher.name ? (o.teacher.name.first || o.teacher.name.last) : 'Teacher' %>
+      <% if (o.section) { %> (Section <%= o.section %>) <% } %>
+      &nbsp;—&nbsp; <a href="/ratings/form?offering=<%= o._id %>">Give Review</a>
+    </li>
+  <% }) %>
+</ul>
+</div>

@@ -1,0 +1,74 @@
+<div class="card">
+  <h1><i class="fa-solid fa-list-check" style="margin-right:8px;color:var(--primary);"></i>Offerings by Term</h1>
+  <form id="termFilter" method="get" action="/admin/offerings" class="filters" style="margin-top:8px;">
+    <label for="termSelect">Term:</label>
+    <select id="termSelect" name="term">
+      <option value="">-- All / Active --</option>
+      <% terms.forEach(function(t){ %>
+        <option value="<%= t._id %>" <%= currentTerm && currentTerm._id && (String(currentTerm._id) === String(t._id)) ? 'selected' : '' %>><%= t.name %> <%= t.isActive ? '(active)' : '' %></option>
+      <% }) %>
+    </select>
+    <button type="submit">Filter</button>
+  </form>
+
+  <table class="table" style="margin-top:12px;">
+    <thead>
+      <tr>
+        <th>Code</th>
+        <th>Title</th>
+        <th>Teacher</th>
+        <th>Dept</th>
+        <th>Program</th>
+        <th>Sem</th>
+        <th>Section</th>
+        <th>Term</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% offerings.forEach(function(o){ %>
+        <tr>
+          <td><%= o.course && o.course.code ? o.course.code : '—' %></td>
+          <td><%= o.course && o.course.title ? o.course.title : '—' %></td>
+          <td><%= o.teacher && o.teacher.name ? (o.teacher.name.first + ' ' + (o.teacher.name.last||'')) : '—' %></td>
+          <td><%= o.department && o.department.name ? o.department.name : '—' %></td>
+          <td><%= o.program && o.program.name ? o.program.name : '—' %></td>
+          <td><%= o.semesterNumber || '—' %></td>
+          <td><%= o.section || '—' %></td>
+          <td><%= o.term && o.term.name ? o.term.name : '—' %></td>
+          <td>
+            <a href="/admin/offerings/<%= o._id %>/edit">Edit</a>
+            <!-- Delete using JS fetch(DELETE) to follow REST practice; uses same-origin credentials (session cookie) -->
+            <button type="button" class="delete-offering" data-id="<%= o._id %>">Delete</button>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+    <script>
+      (function(){
+        // Attach delete handlers (confirm then call DELETE endpoint). Uses same-origin credentials so session cookie is sent.
+        document.querySelectorAll('.delete-offering').forEach(function(btn){
+          btn.addEventListener('click', async function(e){
+            try {
+              if (!confirm('Delete offering?')) return;
+              const id = btn.dataset.id;
+              const res = await fetch('/admin/offerings/' + encodeURIComponent(id), { method: 'DELETE', credentials: 'same-origin', headers: { 'Accept': 'application/json' } });
+              if (res.ok) {
+                // reload to show updated list
+                window.location.reload();
+                return;
+              }
+              let j = null;
+              try { j = await res.json(); } catch(e){}
+              alert((j && j.error && (j.error.message || j.error)) || 'Delete failed');
+            } catch (err) {
+              console.error('delete offering error', err);
+              alert('Delete failed');
+            }
+          });
+        });
+      })();
+    </script>
