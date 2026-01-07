@@ -72,6 +72,22 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Basic CORS to allow React frontend on Vercel to call this API
+app.use(function(req, res, next) {
+  const origin = req.headers.origin;
+  const allowedOrigin = process.env.FRONTEND_ORIGIN || 'https://cvur-portal-wl3x.vercel.app';
+  if (origin === allowedOrigin) {
+    res.header('Access-Control-Allow-Origin', allowedOrigin);
+  }
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/api/auth', authApiRouter);
@@ -84,6 +100,11 @@ app.use('/api/ratings', apiRatingsRouter);
 app.use('/admin/ratings', adminRatingsRouter);
 app.use('/dashboard', dashboardRouter);
 app.use('/', viewsRouter);
+
+// simple health route for Vercel sanity check
+app.get('/health', function(req, res) {
+  res.type('text').send('CVUR backend is running');
+});
 
 // simple health route for Vercel sanity check
 app.get('/health', function(req, res) {
