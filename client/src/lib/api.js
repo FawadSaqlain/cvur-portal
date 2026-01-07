@@ -2,6 +2,9 @@ function getStoredToken() {
   return localStorage.getItem('adminToken') || localStorage.getItem('token') || null;
 }
 
+// Base URL for API; in production set VITE_API_URL to https://....com
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 export async function apiRequest(path, options = {}) {
   const headers = new Headers(options.headers || {});
 
@@ -12,7 +15,9 @@ export async function apiRequest(path, options = {}) {
     headers.set('Authorization', 'Bearer ' + token);
   }
 
-  const res = await fetch(path, {
+  const url = API_BASE + path;
+
+  const res = await fetch(url, {
     ...options,
     headers,
     credentials: 'same-origin'
