@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiRequest } from '../../lib/api';
 
@@ -28,6 +28,7 @@ export default function AdminUserFormPage() {
   const [error, setError] = useState(null);
   const [idCardFile, setIdCardFile] = useState(null);
   const [message, setMessage] = useState('');
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -343,23 +344,78 @@ export default function AdminUserFormPage() {
           <div className="form-row">
             <div className="field">
               <label>University ID Card (image, max 1MB)</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-              />
-              {idCardFile && (
-                <p className="muted">Selected: {idCardFile.name}</p>
-              )}
-              {!idCardFile && isEdit && form.idCardImage && (
-                <div style={{ marginTop: '8px' }}>
-                  <p className="muted" style={{ marginBottom: '4px' }}>Current ID card image:</p>
-                  <img
-                    src={form.idCardImage}
-                    alt="Current ID card"
-                    style={{ maxWidth: '260px', maxHeight: '160px', borderRadius: '4px', border: '1px solid #ddd' }}
+              {isEdit && form.idCardImage ? (
+                <>
+                  {/* hidden file input triggered by the button */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    style={{ display: 'none' }}
                   />
-                </div>
+                  <div style={{ marginTop: '4px' }}>
+                    <div
+                      style={{
+                        position: 'relative',
+                        display: 'inline-block'
+                      }}
+                    >
+                      <img
+                        src={idCardFile ? URL.createObjectURL(idCardFile) : form.idCardImage}
+                        alt="Current ID card"
+                        style={{
+                          maxWidth: '260px',
+                          maxHeight: '160px',
+                          borderRadius: '4px',
+                          border: '1px solid #ddd',
+                          display: 'block'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (fileInputRef.current) fileInputRef.current.click();
+                        }}
+                        style={{
+                          position: 'absolute',
+                          right: '8px',
+                          bottom: '8px',
+                          padding: '4px 8px',
+                          fontSize: '0.8rem',
+                          borderRadius: '4px',
+                          border: 'none',
+                          backgroundColor: 'rgba(0,0,0,0.7)',
+                          color: '#fff',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Change image
+                      </button>
+                    </div>
+                    {idCardFile && (
+                      <p className="muted" style={{ marginTop: '4px' }}>
+                        Selected: {idCardFile.name}
+                      </p>
+                    )}
+                    {!idCardFile && (
+                      <p className="muted" style={{ marginTop: '4px' }}>
+                        Click "Change image" to upload a new ID card. Leave as-is to keep the current image.
+                      </p>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                  />
+                  {idCardFile && (
+                    <p className="muted">Selected: {idCardFile.name}</p>
+                  )}
+                </>
               )}
             </div>
           </div>
