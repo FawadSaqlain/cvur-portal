@@ -74,13 +74,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 // serve uploaded files from the configured uploads directory
 app.use('/uploads', express.static(uploadsDir));
 
-// Basic CORS to allow React frontend on Vercel to call this API
+// Basic CORS to allow the frontend app to call this API
 app.use(function(req, res, next) {
   const origin = req.headers.origin;
-  const configuredOrigin = process.env.FRONTEND_ORIGIN || 'https://cvur-portal-wl3x.vercel.app';
 
-  // Always allow the configured frontend origin
-  if (origin && origin === configuredOrigin) {
+  // In this app we don't rely on cookies across origins, so we can safely echo back the Origin
+  if (origin) {
     res.header('Access-Control-Allow-Origin', origin);
   }
 
