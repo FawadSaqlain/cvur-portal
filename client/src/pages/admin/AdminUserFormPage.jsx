@@ -25,6 +25,8 @@ export default function AdminUserFormPage() {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [idCardFile, setIdCardFile] = useState(null);
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     if (!isEdit) return;
@@ -71,10 +73,25 @@ export default function AdminUserFormPage() {
     }));
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+    setMessage('');
+
+    if (file && file.size > 1024 * 1024) {
+      setMessage('ID card image must be at most 1MB.');
+      e.target.value = '';
+      setIdCardFile(null);
+      return;
+    }
+
+    setIdCardFile(file);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     setError(null);
+    setMessage('');
     try {
       const emailPattern = /^(?:fa|sp)\d{2}-(?:baf|bag|bba|bcs|bec|bed|ben|bes|bmd|bse|bsm|bty)-\d{3}@cuivehari\.edu\.pk$/i;
       const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,16}$/;
@@ -148,24 +165,37 @@ export default function AdminUserFormPage() {
         return;
       }
 
-      const body = { ...form };
-      body.email = emailTrimmed;
-      // backend expects isActive present or absent; we send boolean
-      body.isActive = form.isActive;
-      // Only student users are managed via this UI
-      body.role = 'student';
+      const fd = new FormData();
+      fd.append('email', emailTrimmed);
+      fd.append('firstName', form.firstName || '');
+      fd.append('lastName', form.lastName || '');
+      fd.append('degreeShort', form.degreeShort || '');
+      fd.append('rollNumber', String(form.rollNumber || ''));
+      if (form.intake) fd.append('intake', form.intake.trim());
+      if (form.semesterNumber !== '' && form.semesterNumber !== null && typeof form.semesterNumber !== 'undefined') {
+        fd.append('semesterNumber', String(form.semesterNumber));
+      }
+      if (form.section) fd.append('section', form.section.trim());
+      if (form.cgpa !== '' && form.cgpa !== null && typeof form.cgpa !== 'undefined') {
+        fd.append('cgpa', String(form.cgpa));
+      }
+      if (form.phone) fd.append('phone', form.phone.trim());
+      fd.append('isActive', form.isActive ? 'true' : 'false');
+      fd.append('role', 'student');
+      if (form.password) fd.append('password', form.password);
+      if (idCardFile) {
+        fd.append('idCard', idCardFile);
+      }
 
       if (isEdit) {
         await apiRequest(`/api/admin/users/${id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
+          body: fd
         });
       } else {
         await apiRequest('/api/admin/users', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
+          body: fd
         });
       }
       navigate('/admin/users');
@@ -182,8 +212,9 @@ export default function AdminUserFormPage() {
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} encType="multipart/form-data">
           {error && <p className="error">{error}</p>}
+          {message && !error && <p className="response">{message}</p>}
 
           <div className="form-row form-row-inline">
             <div className="field">
@@ -304,6 +335,20 @@ export default function AdminUserFormPage() {
                 />{' '}
                 Active
               </label>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="field">
+              <label>University ID Card (image, max 1MB)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+              {idCardFile && (
+                <p className="muted">Selected: {idCardFile.name}</p>
+              )}
             </div>
           </div>
 
