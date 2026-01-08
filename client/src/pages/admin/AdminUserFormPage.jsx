@@ -20,7 +20,8 @@ export default function AdminUserFormPage() {
     phone: '',
     role: 'student',
     password: '',
-    isActive: true
+    isActive: true,
+    idCardImage: ''
   });
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
@@ -51,7 +52,8 @@ export default function AdminUserFormPage() {
           phone: u.phone || '',
           role: u.role || 'student',
           password: '',
-          isActive: !!u.isActive
+          isActive: !!u.isActive,
+          idCardImage: u.idCardImage || ''
         });
       } catch (err) {
         if (!cancelled) setError(err.message || 'Failed to load user');
@@ -348,6 +350,16 @@ export default function AdminUserFormPage() {
               />
               {idCardFile && (
                 <p className="muted">Selected: {idCardFile.name}</p>
+              )}
+              {!idCardFile && isEdit && form.idCardImage && (
+                <div style={{ marginTop: '8px' }}>
+                  <p className="muted" style={{ marginBottom: '4px' }}>Current ID card image:</p>
+                  <img
+                    src={form.idCardImage}
+                    alt="Current ID card"
+                    style={{ maxWidth: '260px', maxHeight: '160px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                </div>
               )}
             </div>
           </div>
