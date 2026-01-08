@@ -7,6 +7,7 @@ const Verification = require('../models').VerificationToken;
 const emailUtil = require('../utils/email');
 const path = require('path');
 const fs = require('fs');
+const { put } = require('@vercel/blob');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
@@ -356,31 +357,21 @@ exports.completeProfile = async (req, res) => {
           return res.status(400).json({ success: false, error: { code: 'ERR_FILE_TOO_LARGE', message: 'File too large (max 1MB)' } });
         }
 
-        // use same uploads dir as configured in app.js (writable on Vercel)
-        const uploadsDir = process.env.UPLOADS_DIR || path.join('/tmp', 'uploads');
-
-// remove previous file if present
-if (user.idCardImage) {
-try {
-const prev = path.join(uploadsDir, path.basename(user.idCardImage));
-if (fs.existsSync(prev)) fs.unlinkSync(prev);
-} catch (e) {
-console.warn('failed to remove previous idCard image', e && e.message ? e.message : e);
-}
-}
-
         // preserve extension if available
         const originalExt = path.extname(file.name) || '';
         const ext = originalExt || (file.mimetype === 'image/png' ? '.png' : '.jpg');
-        const filename = `${user._id.toString()}-${Date.now()}${ext}`;
-        const dest = path.join(uploadsDir, filename);
+        const blobName = `idcards/${user._id.toString()}-${Date.now()}${ext}`;
 
-        // express-fileupload exposes mv
-        await new Promise((resolve, reject) => {
-          file.mv(dest, (err) => err ? reject(err) : resolve());
+        // read file buffer (express-fileupload uses temp files when useTempFiles: true)
+        const buffer = file.data && file.data.length ? file.data : fs.readFileSync(file.tempFilePath);
+
+        // upload to Vercel Blob (public access so it can be displayed on profile)
+        const blob = await put(blobName, buffer, {
+          access: 'public',
+          contentType: file.mimetype,
         });
 
-        user.idCardImage = '/uploads/' + filename;
+        user.idCardImage = blob.url;
       }
     } catch (fileErr) {
       console.error('file upload error', fileErr);
