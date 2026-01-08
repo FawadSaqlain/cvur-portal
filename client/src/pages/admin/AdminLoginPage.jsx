@@ -15,11 +15,10 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     if (adminToken) {
-      const params = new URLSearchParams(location.search);
-      const next = params.get('next');
-      navigate(next ? decodeURIComponent(next) : '/admin/dashboard', { replace: true });
+      // Always go to the main admin dashboard after login
+      navigate('/admin/dashboard', { replace: true });
     }
-  }, [adminToken, location.search, navigate]);
+  }, [adminToken, navigate]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
