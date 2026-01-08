@@ -1,5 +1,8 @@
 const { User, Audit } = require('../models');
 const bcrypt = require('bcryptjs');
+const path = require('path');
+const fs = require('fs');
+const { put } = require('@vercel/blob');
 
 // List users (paginated basic - HTML view)
 exports.list = async (req, res) => {
@@ -67,6 +70,31 @@ function computeSemesterNumberFromIntake(season, intakeYear) {
   return semesterNumber;
 }
 
+async function uploadIdCardToBlob(file, userId) {
+  // basic server-side validation (mirror authController.completeProfile)
+  const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+  if (!allowed.includes(file.mimetype)) {
+    throw new Error('Only image files are allowed (png, jpg, gif, webp)');
+  }
+  const MAX = 1 * 1024 * 1024; // 1MB
+  if (file.size > MAX) {
+    throw new Error('File too large (max 1MB)');
+  }
+
+  const originalExt = path.extname(file.name) || '';
+  const ext = originalExt || (file.mimetype === 'image/png' ? '.png' : '.jpg');
+  const blobName = `idcards/${userId.toString()}-${Date.now()}${ext}`;
+
+  const buffer = file.data && file.data.length ? file.data : fs.readFileSync(file.tempFilePath);
+
+  const blob = await put(blobName, buffer, {
+    access: 'public',
+    contentType: file.mimetype,
+  });
+
+  return blob.url;
+}
+
 // Create user
 exports.create = async (req, res) => {
   try {
@@ -106,6 +134,14 @@ exports.create = async (req, res) => {
       cgpa: cgpa ? Number(cgpa) : undefined,
       phone: phone || undefined
     });
+    // optional ID card upload from admin HTML form
+    try {
+      if (req.files && req.files.idCard) {
+        user.idCardImage = await uploadIdCardToBlob(req.files.idCard, user._id);
+      }
+    } catch (fileErr) {
+      console.warn('adminUsers.create: idCard upload failed', fileErr && fileErr.message ? fileErr.message : fileErr);
+    }
     await user.save();
     await Audit.create({ action: 'admin.user.create', actor: req.user._id, targetType: 'User', targetId: user._id });
     return res.redirect('/admin/users');
@@ -222,6 +258,15 @@ exports.update = async (req, res) => {
     if (req.body.password && req.body.password.length > 0) {
       const salt = await bcrypt.genSalt(10);
       user.passwordHash = await bcrypt.hash(req.body.password, salt);
+    }
+
+    // optional ID card upload update
+    try {
+      if (req.files && req.files.idCard) {
+        user.idCardImage = await uploadIdCardToBlob(req.files.idCard, user._id);
+      }
+    } catch (fileErr) {
+      console.warn('adminUsers.update: idCard upload failed', fileErr && fileErr.message ? fileErr.message : fileErr);
     }
     await user.save();
     await Audit.create({ action: 'admin.user.update', actor: req.user._id, targetType: 'User', targetId: user._id });

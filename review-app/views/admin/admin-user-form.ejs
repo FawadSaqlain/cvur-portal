@@ -1,6 +1,6 @@
 <div class="card">
 <h1><i class="fa-solid fa-user-gear" style="margin-right:8px;color:var(--primary);"></i><%= title %></h1>
-<form method="post" action="<%= user ? ('/admin/users/' + user._id + '/edit') : '/admin/users/new' %>">
+<form method="post" action="<%= user ? ('/admin/users/' + user._id + '/edit') : '/admin/users/new' %>" enctype="multipart/form-data">
   <div class="form-row">
     <label>Email</label>
     <input name="email" type="email" required value="<%= user ? user.email : '' %>" />
@@ -40,6 +40,15 @@
   <div>
     <label>Phone</label>
     <input name="phone" value="<%= user ? user.phone || '' : '' %>" />
+  </div>
+  <div>
+    <label>University ID Image (optional)</label>
+    <% if (user && user.idCardImage) { %>
+      <div style="margin-bottom:8px;">
+        <img class="img-preview" alt="Current ID" src="<%= user.idCardImage %>" />
+      </div>
+    <% } %>
+    <input name="idCard" type="file" accept="image/*" />
   </div>
   <div>
     <label>Role</label>
