@@ -190,6 +190,15 @@ exports.createJson = async (req, res) => {
       cgpa: cgpa ? Number(cgpa) : undefined,
       phone: phone || undefined
     });
+    // optional ID card upload from React JSON API
+    try {
+      if (req.files && req.files.idCard) {
+        user.idCardImage = await uploadIdCardToBlob(req.files.idCard, user._id);
+      }
+    } catch (fileErr) {
+      console.warn('adminUsers.createJson: idCard upload failed', fileErr && fileErr.message ? fileErr.message : fileErr);
+    }
+
     await user.save();
     await Audit.create({ action: 'admin.user.create', actor: req.user._id, targetType: 'User', targetId: user._id });
     return res.status(201).json({ success: true, data: { user } });
@@ -273,10 +282,6 @@ exports.update = async (req, res) => {
     return res.redirect('/admin/users');
   } catch (err) {
     console.error('adminUsers.update error', err);
-    return res.status(500).send('Server error');
-  }
-};
-
 // Update user (JSON API for React admin pages)
 exports.updateJson = async (req, res) => {
   try {
@@ -313,6 +318,16 @@ exports.updateJson = async (req, res) => {
       const salt = await bcrypt.genSalt(10);
       user.passwordHash = await bcrypt.hash(req.body.password, salt);
     }
+
+    // optional ID card upload update from React JSON API
+    try {
+      if (req.files && req.files.idCard) {
+        user.idCardImage = await uploadIdCardToBlob(req.files.idCard, user._id);
+      }
+    } catch (fileErr) {
+      console.warn('adminUsers.updateJson: idCard upload failed', fileErr && fileErr.message ? fileErr.message : fileErr);
+    }
+
     await user.save();
     await Audit.create({ action: 'admin.user.update', actor: req.user._id, targetType: 'User', targetId: user._id });
     return res.json({ success: true, data: { user } });
