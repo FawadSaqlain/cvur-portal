@@ -282,6 +282,10 @@ exports.update = async (req, res) => {
     return res.redirect('/admin/users');
   } catch (err) {
     console.error('adminUsers.update error', err);
+    return res.status(500).send('Server error');
+  }
+};
+
 // Update user (JSON API for React admin pages)
 exports.updateJson = async (req, res) => {
   try {
