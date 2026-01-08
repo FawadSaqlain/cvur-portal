@@ -183,6 +183,7 @@ exports.createJson = async (req, res) => {
       role: role || 'student',
       name: { first: firstName || '', last: lastName || '' },
       isActive: true,
+      profileComplete: true,
       degreeShort: degree || undefined,
       rollNumber: roll || undefined,
       intake: intakeObj || undefined,
