@@ -24,7 +24,13 @@ export default function Header() {
   const onLogout = async (e) => {
     e.preventDefault();
     dispatch(logout());
-    navigate('/login');
+    if (adminToken) {
+      // For admin, always go to the dedicated admin login page
+      navigate('/admin/login', { replace: true });
+    } else {
+      // For students or others, use the standard login page
+      navigate('/login', { replace: true });
+    }
   };
 
   return (
