@@ -15,7 +15,6 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     if (adminToken) {
-      // Always go to the main admin dashboard after login
       navigate('/admin/dashboard', { replace: true });
     }
   }, [adminToken, navigate]);

@@ -24,13 +24,7 @@ export default function Header() {
   const onLogout = async (e) => {
     e.preventDefault();
     dispatch(logout());
-    if (adminToken) {
-      // For admin, always go to the dedicated admin login page
-      navigate('/admin/login', { replace: true });
-    } else {
-      // For students or others, use the standard login page
-      navigate('/login', { replace: true });
-    }
+    navigate('/login', { replace: true });
   };
 
   return (
@@ -88,7 +82,7 @@ export default function Header() {
             <Link to="/admin/terms">Terms</Link>
             <Link to="/admin/offerings">Manage Offerings</Link>
             <Link to="/admin/users">Manage Users</Link>
-            <a href="#" onClick={onLogout} title="Admin Logout">Admin Logout</a>
+            <Link to="/admin/logout" title="Admin Logout">Admin Logout</Link>
           </>
         )}
       </nav>

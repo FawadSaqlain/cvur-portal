@@ -9,6 +9,7 @@ import ResetPasswordPage from '../pages/ResetPasswordPage.jsx';
 import ProfilePage from '../pages/ProfilePage.jsx';
 import CompleteProfilePage from '../pages/CompleteProfilePage.jsx';
 import AdminLoginPage from '../pages/admin/AdminLoginPage.jsx';
+import AdminLogoutPage from '../pages/admin/AdminLogoutPage.jsx';
 import RatingsBrowsePage from '../pages/RatingsBrowsePage.jsx';
 import StudentRatingsDashboardPage from '../pages/StudentRatingsDashboardPage.jsx';
 import StudentEditReviewPage from '../pages/StudentEditReviewPage.jsx';
@@ -49,6 +50,7 @@ export default function App() {
         </Route>
 
         <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route path="/admin/logout" element={<AdminLogoutPage />} />
 
         <Route element={<RequireAdmin />}
         >

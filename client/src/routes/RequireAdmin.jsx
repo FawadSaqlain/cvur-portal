@@ -6,8 +6,8 @@ export default function RequireAdmin() {
   const location = useLocation();
 
   if (!token) {
-    const next = encodeURIComponent(location.pathname + location.search);
-    return <Navigate to={`/admin/login?next=${next}`} replace />;
+    // Always send unauthenticated admin access to the plain admin login page
+    return <Navigate to="/admin/login" replace />;
   }
 
   return <Outlet />;
