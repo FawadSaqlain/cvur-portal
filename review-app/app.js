@@ -77,9 +77,9 @@ app.use('/uploads', express.static(uploadsDir));
 // Basic CORS to allow React frontend on Vercel to call this API
 app.use(function(req, res, next) {
   const origin = req.headers.origin;
-  // In production FRONTEND_ORIGIN should be set to the deployed React app origin.
   const configuredOrigin = process.env.FRONTEND_ORIGIN || 'https://cvur-portal-wl3x.vercel.app';
 
+  // Always allow the configured frontend origin
   if (origin && origin === configuredOrigin) {
     res.header('Access-Control-Allow-Origin', origin);
   }
@@ -88,7 +88,7 @@ app.use(function(req, res, next) {
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
 
   if (req.method === 'OPTIONS') {
-    // end preflight request after setting CORS headers
+    // Return OK for all preflight requests after setting CORS headers
     return res.sendStatus(200);
   }
 
