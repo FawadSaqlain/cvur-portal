@@ -7,11 +7,11 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'https://review-app-blue.vercel.app/',
+        target: 'https://cvur-portal-server.vercel.app/',
         changeOrigin: true
       },
       '/uploads': {
-        target: 'https://review-app-blue.vercel.app/',
+        target: 'https://cvur-portal-server.vercel.app/',
         changeOrigin: true
       }
     }
